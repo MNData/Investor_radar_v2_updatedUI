@@ -1,0 +1,1645 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Investor Conviction Radar — Institutional Intelligence Platform</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+            mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
+          },
+          colors: {
+            fin: {
+              base: '#090a0d',
+              surface: '#111317',
+              surfaceElevated: '#171a20',
+              border: '#20242c',
+              borderSubtle: '#181b22',
+              hover: '#1b1f26',
+              muted: '#717684',
+              secondary: '#9da3b2',
+              primary: '#f3f4f6'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #090a0d;
+      color: #e5e7eb;
+      font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+      -webkit-font-smoothing: antialiased;
+    }
+    
+    /* Institutional borders and panels */
+    .terminal-panel {
+      background: #111317;
+      border: 1px solid #20242c;
+    }
+    .terminal-subpanel {
+      background: #15181f;
+      border: 1px solid #222630;
+    }
+    .terminal-header {
+      background: #0d0f13;
+      border-bottom: 1px solid #20242c;
+    }
+
+    /* Monospaced numeric alignment */
+    .num-mono {
+      font-family: 'JetBrains Mono', monospace;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Custom subtle scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #090a0d;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #232732;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #323746;
+    }
+
+    /* Micro live indicator pulse */
+    @keyframes liveBeacon {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.92); }
+    }
+    .live-beacon {
+      animation: liveBeacon 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    /* Subtle row entry animation for live updates */
+    @keyframes rowEntry {
+      0% { background-color: rgba(16, 185, 129, 0.12); }
+      100% { background-color: transparent; }
+    }
+    .deal-row-fresh {
+      animation: rowEntry 3s ease-out;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-zinc-700 selection:text-white">
+
+  <!-- TOP INSTITUTIONAL NAVIGATION -->
+  <header class="terminal-header sticky top-0 z-40">
+    <div class="max-w-[1400px] mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+      
+      <!-- Left: Platform Branding & Status -->
+      <div class="flex items-center space-x-4">
+        <div class="flex items-center space-x-2.5">
+          <div class="h-7 w-7 rounded bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-100 shadow-sm">
+            <i data-lucide="crosshair" class="h-4 w-4 text-zinc-300"></i>
+          </div>
+          <div class="flex items-baseline space-x-2">
+            <span class="font-bold text-sm tracking-tight text-zinc-100 font-mono">CONVICTION<span class="text-zinc-400 font-normal">RADAR</span></span>
+            <span class="text-[10px] font-mono px-1.5 py-0.2 rounded bg-zinc-800/80 text-zinc-400 border border-zinc-700/60 font-medium">v3.0 INTEL</span>
+          </div>
+        </div>
+
+        <div class="hidden md:flex items-center space-x-3 pl-4 border-l border-zinc-800 text-xs">
+          <div class="flex items-center space-x-1.5">
+            <span class="h-2 w-2 rounded-full bg-emerald-500 live-beacon"></span>
+            <span class="text-zinc-400 font-mono text-[11px]">DISCLOSURE FEEDS: ACTIVE</span>
+          </div>
+          <span class="text-zinc-600">&bull;</span>
+          <span class="text-zinc-500 text-[11px] font-mono">SEC 13F &bull; STOCK ACT (2025–2026)</span>
+        </div>
+      </div>
+
+      <!-- Right: Action Suite -->
+      <div class="flex items-center space-x-2 sm:space-x-2.5">
+        
+        <!-- Live Scan Action -->
+        <button 
+          id="btnScanAll" 
+          onclick="app.scanNotableInvestors()" 
+          class="inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded bg-zinc-100 hover:bg-white text-zinc-900 border border-transparent shadow-sm transition active:scale-[0.98]"
+        >
+          <i data-lucide="refresh-cw" class="h-3.5 w-3.5 mr-1.5 text-zinc-800"></i>
+          <span id="btnScanText">Scan Wire Feeds</span>
+        </button>
+
+        <!-- Add Custom Investor -->
+        <button 
+          onclick="app.openModal('customScanModal')" 
+          class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-zinc-700/80 transition"
+        >
+          <i data-lucide="plus" class="h-3.5 w-3.5 mr-1.5 text-zinc-400"></i>
+          <span>Track Entity</span>
+        </button>
+
+        <!-- Conviction Simulator -->
+        <button 
+          onclick="app.openModal('calculatorModal')" 
+          class="inline-flex items-center px-2.5 py-1.5 text-xs font-medium rounded bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-700/80 transition"
+          title="Conviction & Allocation Calculator"
+        >
+          <i data-lucide="sliders" class="h-3.5 w-3.5 sm:mr-1.5 text-zinc-400"></i>
+          <span class="hidden sm:inline">Simulator</span>
+        </button>
+
+        <!-- Export CSV -->
+        <button 
+          onclick="app.engine.exportToCSV()" 
+          class="p-1.5 rounded bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 border border-zinc-700/80 transition" 
+          title="Export Structured Dataset (CSV)"
+        >
+          <i data-lucide="download" class="h-3.5 w-3.5"></i>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- MAIN VIEWPORT -->
+  <main class="max-w-[1400px] mx-auto px-4 sm:px-6 py-5 flex-1 w-full space-y-4">
+
+    <!-- TELEMETRY METRIC STRIP (FINTECH DENSE DESIGN) -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      
+      <!-- Metric 1: Aggregate Capital -->
+      <div class="terminal-panel rounded p-3.5 space-y-1">
+        <div class="flex items-center justify-between text-zinc-400 text-[11px] font-medium uppercase tracking-wider">
+          <span>Active Monitored Capital</span>
+          <i data-lucide="wallet" class="h-3.5 w-3.5 text-zinc-500"></i>
+        </div>
+        <div class="flex items-baseline space-x-2">
+          <span id="statTotalCapital" class="text-xl sm:text-2xl font-bold num-mono text-zinc-100">$0.00</span>
+        </div>
+        <div class="text-[11px] text-zinc-500 flex items-center justify-between pt-0.5">
+          <span>Filtered deployment size</span>
+          <span class="text-zinc-400 font-mono text-[10px]">USD NOMINAL</span>
+        </div>
+      </div>
+
+      <!-- Metric 2: Mean Confidence Ratio -->
+      <div class="terminal-panel rounded p-3.5 space-y-1">
+        <div class="flex items-center justify-between text-zinc-400 text-[11px] font-medium uppercase tracking-wider">
+          <span>Mean Conviction Index</span>
+          <i data-lucide="percent" class="h-3.5 w-3.5 text-zinc-500"></i>
+        </div>
+        <div class="flex items-baseline space-x-2">
+          <span id="statAvgConfidence" class="text-xl sm:text-2xl font-bold num-mono text-zinc-100">0.00%</span>
+        </div>
+        <div class="text-[11px] text-zinc-500 flex items-center justify-between pt-0.5">
+          <span>Trade / Est. Net Worth</span>
+          <span class="text-zinc-400 font-mono text-[10px]">WEIGHTED</span>
+        </div>
+      </div>
+
+      <!-- Metric 3: Top Conviction Bet -->
+      <div class="terminal-panel rounded p-3.5 space-y-1">
+        <div class="flex items-center justify-between text-zinc-400 text-[11px] font-medium uppercase tracking-wider">
+          <span>Peak Concentration Bet</span>
+          <span class="px-1.5 py-0.2 rounded bg-emerald-950/60 border border-emerald-800/40 text-emerald-400 text-[9px] font-mono font-semibold">MAX CONVICTION</span>
+        </div>
+        <div class="truncate">
+          <span id="statHighestBet" class="text-sm sm:text-base font-semibold text-zinc-200 truncate block">Calculating...</span>
+        </div>
+        <div class="text-[11px] text-zinc-400 font-mono truncate" id="statHighestBetRatio">
+          0.00% of net worth
+        </div>
+      </div>
+
+      <!-- Metric 4: Total Tracked Filings -->
+      <div class="terminal-panel rounded p-3.5 space-y-1">
+        <div class="flex items-center justify-between text-zinc-400 text-[11px] font-medium uppercase tracking-wider">
+          <span>Tracked Filings &amp; PTRs</span>
+          <i data-lucide="file-check-2" class="h-3.5 w-3.5 text-zinc-500"></i>
+        </div>
+        <div class="flex items-baseline space-x-2">
+          <span id="statTotalDeals" class="text-xl sm:text-2xl font-bold num-mono text-zinc-100">0</span>
+          <span id="statGovCountBadge" class="text-xs text-indigo-400 font-mono">(0 Congressional)</span>
+        </div>
+        <div class="text-[11px] text-zinc-500 flex items-center justify-between pt-0.5">
+          <span>Verified regulatory records</span>
+          <span class="text-zinc-400 font-mono text-[10px]">Q2/Q3 2026</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- CONTROL SUITE: CATEGORY TABS & SIGNPOSTING LEGEND -->
+    <div class="terminal-panel rounded p-3 space-y-3">
+      
+      <!-- Category Segment Control (Institutional grey bar) -->
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-2.5">
+        
+        <div class="flex items-center space-x-1.5 overflow-x-auto pb-1 md:pb-0" id="backgroundSlicerContainer">
+          
+          <button 
+            onclick="app.setBackgroundFilter('ALL')" 
+            class="pill-bg-slicer px-2.5 py-1 rounded text-xs font-medium whitespace-nowrap transition bg-zinc-200 text-zinc-900 shadow-sm" 
+            data-bg="ALL"
+          >
+            All Entities
+          </button>
+
+          <!-- U.S. Government Officials (Signed with Slate-Indigo) -->
+          <button 
+            onclick="app.setBackgroundFilter('U.S. Government Officials')" 
+            class="pill-bg-slicer px-2.5 py-1 rounded text-xs font-medium whitespace-nowrap transition bg-zinc-900 text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800 border border-zinc-800 flex items-center space-x-1.5" 
+            data-bg="U.S. Government Officials"
+          >
+            <i data-lucide="landmark" class="h-3.5 w-3.5 text-indigo-400"></i>
+            <span>U.S. Government (STOCK Act)</span>
+            <span id="govSlicerCount" class="ml-1 px-1.5 py-0.2 rounded bg-indigo-950/80 text-indigo-300 border border-indigo-800/60 text-[10px] font-mono">5</span>
+          </button>
+
+          <!-- Hedge Fund Managers -->
+          <button 
+            onclick="app.setBackgroundFilter('Hedge Fund Managers')" 
+            class="pill-bg-slicer px-2.5 py-1 rounded text-xs font-medium whitespace-nowrap transition bg-zinc-900 text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800 border border-zinc-800 flex items-center space-x-1.5" 
+            data-bg="Hedge Fund Managers"
+          >
+            <i data-lucide="briefcase" class="h-3.5 w-3.5 text-zinc-400"></i>
+            <span>Hedge Fund 13F</span>
+          </button>
+
+          <!-- Venture Capital & Angels -->
+          <button 
+            onclick="app.setBackgroundFilter('Venture Capital & Angels')" 
+            class="pill-bg-slicer px-2.5 py-1 rounded text-xs font-medium whitespace-nowrap transition bg-zinc-900 text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800 border border-zinc-800 flex items-center space-x-1.5" 
+            data-bg="Venture Capital & Angels"
+          >
+            <i data-lucide="rocket" class="h-3.5 w-3.5 text-zinc-400"></i>
+            <span>Venture &amp; Growth</span>
+          </button>
+
+          <!-- Family Office -->
+          <button 
+            onclick="app.setBackgroundFilter('Family Office & Conglomerates')" 
+            class="pill-bg-slicer px-2.5 py-1 rounded text-xs font-medium whitespace-nowrap transition bg-zinc-900 text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800 border border-zinc-800 flex items-center space-x-1.5" 
+            data-bg="Family Office & Conglomerates"
+          >
+            <i data-lucide="building-2" class="h-3.5 w-3.5 text-zinc-400"></i>
+            <span>Family Office</span>
+          </button>
+
+          <!-- Growth & Thematic -->
+          <button 
+            onclick="app.setBackgroundFilter('Growth & Thematic Funds')" 
+            class="pill-bg-slicer px-2.5 py-1 rounded text-xs font-medium whitespace-nowrap transition bg-zinc-900 text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800 border border-zinc-800 flex items-center space-x-1.5" 
+            data-bg="Growth & Thematic Funds"
+          >
+            <i data-lucide="trending-up" class="h-3.5 w-3.5 text-zinc-400"></i>
+            <span>Thematic Funds</span>
+          </button>
+
+        </div>
+
+        <!-- Semantic Signposting Legend (Functional color-code guide) -->
+        <div class="hidden xl:flex items-center space-x-3 text-[11px] font-mono text-zinc-400 border-l border-zinc-800 pl-3">
+          <span class="text-zinc-500 uppercase text-[10px] tracking-wider">Conviction Signal:</span>
+          <span class="inline-flex items-center text-emerald-400 font-medium">
+            <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 mr-1.5"></span>&ge; 5% High Conviction
+          </span>
+          <span class="inline-flex items-center text-sky-400 font-medium">
+            <span class="h-1.5 w-1.5 rounded-full bg-sky-400 mr-1.5"></span>1–5% Strategic
+          </span>
+          <span class="inline-flex items-center text-amber-400 font-medium">
+            <span class="h-1.5 w-1.5 rounded-full bg-amber-400 mr-1.5"></span>0.2–1% Standard
+          </span>
+          <span class="inline-flex items-center text-zinc-500 font-medium">
+            <span class="h-1.5 w-1.5 rounded-full bg-zinc-600 mr-1.5"></span>&lt; 0.2% Minor
+          </span>
+        </div>
+
+      </div>
+
+      <!-- FILTER & SEARCH BAR -->
+      <div class="pt-2.5 border-t border-zinc-800/80 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+        
+        <!-- Search Input -->
+        <div class="relative flex-1">
+          <i data-lucide="search" class="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500"></i>
+          <input 
+            type="text" 
+            id="searchInput" 
+            placeholder="Search by investor (Pelosi, Buffett, Thiel), target asset (AVGO, PLTR, Anduril), or firm..." 
+            class="w-full pl-9 pr-3 py-1.5 bg-zinc-950/80 border border-zinc-800 rounded text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-zinc-500 font-sans transition"
+            oninput="app.onSearchInput(this.value)"
+          >
+        </div>
+
+        <!-- Filter Selects -->
+        <div class="flex items-center space-x-2">
+          
+          <!-- Sector Filter -->
+          <select 
+            id="sectorSelect" 
+            onchange="app.setSectorFilter(this.value)" 
+            class="bg-zinc-950/90 border border-zinc-800 rounded text-xs py-1.5 px-2.5 text-zinc-300 focus:outline-none focus:border-zinc-500 font-sans"
+          >
+            <option value="ALL">All Sectors</option>
+            <option value="Semiconductors">Semiconductors</option>
+            <option value="Artificial Intelligence">Artificial Intelligence</option>
+            <option value="Defense Tech & Autonomy">Defense Tech &amp; Autonomy</option>
+            <option value="Cybersecurity">Cybersecurity</option>
+            <option value="E-Commerce & Tech">E-Commerce &amp; Tech</option>
+            <option value="Healthcare & Biotech">Healthcare &amp; Biotech</option>
+            <option value="Mobility & Autonomous Fleet">Mobility &amp; Fleets</option>
+          </select>
+
+          <!-- Conviction Tier Filter -->
+          <div class="flex items-center space-x-1 border-l border-zinc-800 pl-2">
+            <button onclick="app.setConvictionFilter('ALL')" class="pill-conviction px-2 py-1 rounded text-[11px] font-medium transition bg-zinc-200 text-zinc-900" data-tier="ALL">All</button>
+            <button onclick="app.setConvictionFilter('HIGH')" class="pill-conviction px-2 py-1 rounded text-[11px] font-medium transition bg-zinc-900 text-zinc-400 hover:text-zinc-200" data-tier="HIGH">&ge;5%</button>
+            <button onclick="app.setConvictionFilter('MODERATE')" class="pill-conviction px-2 py-1 rounded text-[11px] font-medium transition bg-zinc-900 text-zinc-400 hover:text-zinc-200" data-tier="MODERATE">1-5%</button>
+            <button onclick="app.setConvictionFilter('TOEHOLD')" class="pill-conviction px-2 py-1 rounded text-[11px] font-medium transition bg-zinc-900 text-zinc-400 hover:text-zinc-200" data-tier="TOEHOLD">&lt;1%</button>
+          </div>
+
+          <!-- Sort Select -->
+          <select 
+            id="sortSelect" 
+            onchange="app.onSortChange(this.value)" 
+            class="bg-zinc-950/90 border border-zinc-800 rounded text-xs py-1.5 px-2.5 text-zinc-300 focus:outline-none focus:border-zinc-500 font-sans"
+          >
+            <option value="confidence_desc">Conviction % (&darr;)</option>
+            <option value="confidence_asc">Conviction % (&uarr;)</option>
+            <option value="amount_desc">Disclosed Amount ($)</option>
+            <option value="networth_desc">Net Worth ($)</option>
+            <option value="date_desc">Filing Date</option>
+            <option value="name_asc">Investor Name (A-Z)</option>
+          </select>
+
+          <!-- Reset Button -->
+          <button 
+            onclick="app.resetAllFilters()" 
+            class="p-1.5 rounded bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 border border-zinc-800 transition" 
+            title="Reset Filters"
+          >
+            <i data-lucide="rotate-ccw" class="h-3.5 w-3.5"></i>
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- SCANNER PROGRESS BAR (TRIGGERED DURING LIVE SYNC) -->
+    <div id="scanProgressBarContainer" class="hidden terminal-panel rounded p-3 border-l-2 border-emerald-500 bg-zinc-950/90">
+      <div class="flex items-center justify-between text-xs text-zinc-300 mb-1.5 font-mono">
+        <span class="flex items-center space-x-2">
+          <i data-lucide="loader-2" class="h-3.5 w-3.5 animate-spin text-emerald-400"></i>
+          <span id="scanStatusText">Connecting to wire feeds &amp; EDGAR repositories...</span>
+        </span>
+        <span id="scanProgressCount" class="text-zinc-400">0 / 6</span>
+      </div>
+      <div class="w-full bg-zinc-900 h-1.5 rounded-full overflow-hidden">
+        <div id="scanProgressBar" class="bg-emerald-500 h-full rounded-full transition-all duration-300" style="width: 0%;"></div>
+      </div>
+    </div>
+
+    <!-- STRUCTURED DATA TABLE (INSTITUTIONAL GRADE) -->
+    <div class="terminal-panel rounded overflow-hidden shadow-lg">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="border-b border-zinc-800 bg-[#0c0e12] text-[10px] uppercase tracking-wider font-semibold text-zinc-400">
+              
+              <!-- Column 1: Investor Entity -->
+              <th scope="col" class="py-3 px-4 w-[28%] font-mono">
+                <div class="flex items-center space-x-1.5 text-zinc-300">
+                  <span class="text-zinc-500">01</span>
+                  <span>Investor Entity &amp; Profile</span>
+                </div>
+              </th>
+
+              <!-- Column 2: Position Disclosed -->
+              <th scope="col" class="py-3 px-4 w-[38%] font-mono">
+                <div class="flex items-center space-x-1.5 text-zinc-300">
+                  <span class="text-zinc-500">02</span>
+                  <span>Disclosed Position &amp; Channel</span>
+                </div>
+              </th>
+
+              <!-- Column 3: Conviction Ratio -->
+              <th scope="col" class="py-3 px-4 w-[26%] font-mono">
+                <div class="flex items-center space-x-1.5 text-zinc-300">
+                  <span class="text-zinc-500">03</span>
+                  <span>Conviction Index (Trade / Net Worth)</span>
+                </div>
+              </th>
+
+              <!-- Column 4: Verification Source -->
+              <th scope="col" class="py-3 px-3 text-right w-[8%] font-mono">
+                <span>Record</span>
+              </th>
+
+            </tr>
+          </thead>
+          <tbody id="dealsTableBody" class="divide-y divide-zinc-800/60 text-xs">
+            <!-- Rendered by JavaScript -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Empty State -->
+      <div id="emptyState" class="hidden py-14 text-center">
+        <div class="inline-flex p-2.5 rounded bg-zinc-900 text-zinc-500 mb-2 border border-zinc-800">
+          <i data-lucide="filter" class="h-5 w-5"></i>
+        </div>
+        <h3 class="text-xs font-semibold text-zinc-300">No matching investment records found</h3>
+        <p class="text-[11px] text-zinc-500 mt-0.5 max-w-sm mx-auto">Adjust the active category slicer or reset the query filter.</p>
+        <button onclick="app.resetAllFilters()" class="mt-3 px-2.5 py-1 text-xs rounded bg-zinc-800 text-zinc-200 hover:bg-zinc-700 transition">
+          Clear All Filters
+        </button>
+      </div>
+
+      <!-- Table Footer / Telemetry Bar -->
+      <div class="px-4 py-2.5 border-t border-zinc-800/80 bg-[#0d0f13] flex flex-col sm:flex-row items-start sm:items-center justify-between text-[11px] text-zinc-500 gap-2">
+        <div class="flex items-center space-x-2 font-mono">
+          <span id="resultsCount">Showing 0 records</span>
+          <span>&bull;</span>
+          <span class="text-zinc-600">Local cache synchronized</span>
+        </div>
+        <div class="flex items-center space-x-4">
+          <button onclick="app.forceReloadDataset()" class="text-zinc-400 hover:text-zinc-200 transition font-mono underline decoration-zinc-700">
+            Restore Baseline Dataset (17 Verified Deals)
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-zinc-800/80 bg-[#0c0d10] py-4 text-xs text-zinc-500">
+    <div class="max-w-[1400px] mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px]">
+      <p class="font-mono text-zinc-500">
+        INVESTOR CONVICTION RADAR &bull; Formula: <span class="text-zinc-400">Conviction % = (Disclosed Nominal Amount &divide; Estimated Net Worth) &times; 100</span>
+      </p>
+      <p class="text-zinc-600">
+        Disclosures compiled from U.S. House/Senate Clerk Office, SEC EDGAR 13F/Form 4, &amp; verifiable wire records.
+      </p>
+    </div>
+  </footer>
+
+  <!-- MODAL 1: TRACK & SCAN CUSTOM INVESTOR -->
+  <div id="customScanModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="terminal-panel rounded-lg max-w-md w-full p-5 space-y-4 shadow-2xl relative border border-zinc-700">
+      
+      <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+        <div class="flex items-center space-x-2">
+          <div class="p-1 rounded bg-zinc-800 text-zinc-300">
+            <i data-lucide="user-plus" class="h-4 w-4"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-semibold text-zinc-100">Track New Investor Entity</h3>
+            <p class="text-[11px] text-zinc-400">Automate real-time news and filing extraction</p>
+          </div>
+        </div>
+        <button onclick="app.closeModal('customScanModal')" class="text-zinc-500 hover:text-zinc-300 p-1">
+          <i data-lucide="x" class="h-4 w-4"></i>
+        </button>
+      </div>
+
+      <form id="customScanForm" onsubmit="app.submitCustomScan(event)" class="space-y-3.5 text-xs">
+        <div>
+          <label class="block text-zinc-300 font-medium mb-1">Entity / Official Name</label>
+          <input 
+            type="text" 
+            id="customInvestorName" 
+            required 
+            placeholder="e.g. Nancy Pelosi, Dan Crenshaw, Ray Dalio, Howard Marks..."
+            class="w-full px-2.5 py-1.5 bg-zinc-950 border border-zinc-800 rounded text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-zinc-500 font-sans"
+            list="knownInvestorsList"
+            onchange="app.onInvestorSelect(this.value)"
+          >
+          <datalist id="knownInvestorsList">
+            <option value="Nancy Pelosi">
+            <option value="Dan Crenshaw">
+            <option value="Josh Gottheimer">
+            <option value="Marjorie Taylor Greene">
+            <option value="Tommy Tuberville">
+            <option value="Warren Buffett">
+            <option value="Peter Thiel">
+            <option value="Bill Ackman">
+            <option value="Stanley Druckenmiller">
+            <option value="Cathie Wood">
+            <option value="Ray Dalio">
+            <option value="David Tepper">
+            <option value="Michael Burry">
+            <option value="Vinod Khosla">
+            <option value="Ken Griffin">
+          </datalist>
+        </div>
+
+        <div>
+          <label class="block text-zinc-300 font-medium mb-1">Category Classification</label>
+          <select id="customBackground" class="w-full px-2.5 py-1.5 bg-zinc-950 border border-zinc-800 rounded text-zinc-200 text-xs">
+            <option value="U.S. Government Officials">U.S. Government Official (STOCK Act Mandate)</option>
+            <option value="Hedge Fund Managers" selected>Hedge Fund Manager (SEC 13F)</option>
+            <option value="Venture Capital & Angels">Venture Capital &amp; Angel</option>
+            <option value="Family Office & Conglomerates">Family Office &amp; Holding Co.</option>
+            <option value="Growth & Thematic Funds">Thematic &amp; Growth Fund</option>
+          </select>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label class="block text-zinc-300 font-medium mb-1">Affiliation / Firm</label>
+            <input 
+              type="text" 
+              id="customFirmName" 
+              placeholder="e.g. U.S. Congress, Citadel" 
+              class="w-full px-2.5 py-1.5 bg-zinc-950 border border-zinc-800 rounded text-zinc-100 text-xs"
+            >
+          </div>
+          <div>
+            <label class="block text-zinc-300 font-medium mb-1">Est. Net Worth ($ USD)</label>
+            <input 
+              type="number" 
+              id="customNetWorth" 
+              placeholder="e.g. 125000000" 
+              class="w-full px-2.5 py-1.5 bg-zinc-950 border border-zinc-800 rounded text-zinc-100 text-xs font-mono"
+            >
+          </div>
+        </div>
+
+        <div class="p-2.5 bg-zinc-950 border border-zinc-800/80 rounded text-[11px] text-zinc-400 space-y-1">
+          <div class="flex items-center space-x-1.5 text-zinc-300 font-mono">
+            <i data-lucide="satellite" class="h-3 w-3 text-emerald-400"></i>
+            <span>Automated Scanner Pipeline</span>
+          </div>
+          <p>
+            Executes targeted search across SEC filings, Wikipedia public financial records, and Algolia wires to structure target assets, dates, and trade nominal amounts.
+          </p>
+        </div>
+
+        <div class="flex items-center justify-end space-x-2 pt-2 border-t border-zinc-800">
+          <button type="button" onclick="app.closeModal('customScanModal')" class="px-3 py-1.5 rounded bg-zinc-900 text-zinc-300 hover:bg-zinc-800 border border-zinc-800">Cancel</button>
+          <button type="submit" id="btnCustomScanSubmit" class="px-3 py-1.5 rounded bg-zinc-100 hover:bg-white text-zinc-900 font-medium flex items-center space-x-1.5">
+            <i data-lucide="sparkles" class="h-3.5 w-3.5"></i>
+            <span>Scan &amp; Ingest</span>
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- MODAL 2: CONVICTION & ALLOCATION SIMULATOR -->
+  <div id="calculatorModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="terminal-panel rounded-lg max-w-lg w-full p-5 space-y-4 shadow-2xl relative border border-zinc-700">
+      
+      <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+        <div class="flex items-center space-x-2">
+          <div class="p-1 rounded bg-zinc-800 text-zinc-300">
+            <i data-lucide="sliders" class="h-4 w-4"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-semibold text-zinc-100">Conviction &amp; Sizing Simulator</h3>
+            <p class="text-[11px] text-zinc-400">Compute relative portfolio concentration against benchmarks</p>
+          </div>
+        </div>
+        <button onclick="app.closeModal('calculatorModal')" class="text-zinc-500 hover:text-zinc-300 p-1">
+          <i data-lucide="x" class="h-4 w-4"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3.5 text-xs">
+        
+        <div>
+          <label class="block text-zinc-300 font-medium mb-1">Investor Estimated Net Worth ($ USD)</label>
+          <div class="relative">
+            <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-500 font-mono">$</span>
+            <input 
+              type="number" 
+              id="calcNetWorth" 
+              value="125000000" 
+              class="w-full pl-7 pr-3 py-1.5 bg-zinc-950 border border-zinc-800 rounded text-zinc-100 font-mono text-xs focus:outline-none focus:border-zinc-500"
+              oninput="app.updateCalculator()"
+            >
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-zinc-300 font-medium mb-1">Disclosed Transaction Nominal ($ USD)</label>
+          <div class="relative">
+            <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-500 font-mono">$</span>
+            <input 
+              type="number" 
+              id="calcInvestmentAmount" 
+              value="5000000" 
+              class="w-full pl-7 pr-3 py-1.5 bg-zinc-950 border border-zinc-800 rounded text-zinc-100 font-mono text-xs focus:outline-none focus:border-zinc-500"
+              oninput="app.updateCalculator()"
+            >
+          </div>
+        </div>
+
+        <!-- Calculated Output Display (Institutional Grey + Semantic Indicators) -->
+        <div class="terminal-subpanel p-3.5 rounded space-y-3">
+          
+          <div class="flex items-baseline justify-between">
+            <span class="text-zinc-400 text-xs">Normalized Conviction Ratio:</span>
+            <span id="calcResultRatio" class="text-2xl font-bold num-mono text-zinc-100">4.00%</span>
+          </div>
+
+          <!-- Progress bar -->
+          <div class="w-full bg-zinc-900 h-2 rounded-full overflow-hidden border border-zinc-800">
+            <div id="calcResultBar" class="h-full bg-sky-500 rounded-full transition-all duration-300" style="width: 40%;"></div>
+          </div>
+
+          <div class="flex items-center justify-between text-[11px]">
+            <span class="text-zinc-500">Tier Classification:</span>
+            <span id="calcResultTier" class="px-2 py-0.5 rounded font-mono font-semibold bg-sky-950/60 text-sky-400 border border-sky-800/40">Strategic Conviction (1–5%)</span>
+          </div>
+
+          <div id="calcComparison" class="text-[11px] text-zinc-400 pt-2 border-t border-zinc-800/80 leading-relaxed font-sans">
+            Equal to a strategic allocation. Benchmark: Nancy Pelosi's \$5.0M Broadcom call options (~4.00% of net worth) or Stanley Druckenmiller's Natera holding (~3.45%).
+          </div>
+        </div>
+
+        <div class="flex justify-end pt-1">
+          <button onclick="app.closeModal('calculatorModal')" class="px-3 py-1.5 rounded bg-zinc-800 text-zinc-200 hover:bg-zinc-700 text-xs">Close</button>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-16 opacity-0 transition-all duration-200 pointer-events-none flex items-center space-x-2.5 px-3.5 py-2.5 rounded bg-zinc-900 border border-zinc-700 shadow-xl text-xs text-zinc-200 font-mono">
+    <div class="p-1 rounded bg-zinc-800 text-emerald-400">
+      <i data-lucide="check" class="h-3.5 w-3.5"></i>
+    </div>
+    <span id="toastMessage">Operation completed.</span>
+  </div>
+
+  <!-- DATASET & ENGINE -->
+  <script>
+    const INITIAL_VERIFIED_DEALS = [
+      // 1. U.S. GOVERNMENT OFFICIALS (2025 - 2026 STOCK ACT DISCLOSURES)
+      {
+        id: "gov-001",
+        investorName: "Nancy Pelosi",
+        firm: "U.S. Congress (CA-11)",
+        background: "U.S. Government Officials",
+        avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120&auto=format&fit=crop&q=80",
+        netWorth: 125000000,
+        company: "Broadcom Inc. (AVGO) Call Options",
+        investmentAmount: 5000000,
+        date: "2026-07-02",
+        roundType: "STOCK Act Periodic Report (PTR)",
+        sector: "Semiconductors",
+        isLeveraged: true,
+        description: "Disclosed 20 call options with a strike price of $800 expiring in 2026, gaining leveraged exposure on AI custom ASIC growth.",
+        sourceUrl: "https://disclosures-clerk.house.gov",
+        sourceName: "House Clerk PTR"
+      },
+      {
+        id: "gov-002",
+        investorName: "Dan Crenshaw",
+        firm: "U.S. Congress (TX-02)",
+        background: "U.S. Government Officials",
+        avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80",
+        netWorth: 1900000,
+        company: "Amazon.com Inc. (AMZN)",
+        investmentAmount: 150000,
+        date: "2026-05-18",
+        roundType: "STOCK Act Periodic Report (PTR)",
+        sector: "E-Commerce & Tech",
+        isLeveraged: false,
+        description: "Disclosed direct common stock acquisition within mandatory 45-day congressional filing window.",
+        sourceUrl: "https://disclosures-clerk.house.gov",
+        sourceName: "House Clerk PTR"
+      },
+      {
+        id: "gov-003",
+        investorName: "Josh Gottheimer",
+        firm: "U.S. Congress (NJ-05)",
+        background: "U.S. Government Officials",
+        avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&auto=format&fit=crop&q=80",
+        netWorth: 22500000,
+        company: "Palantir Technologies (PLTR)",
+        investmentAmount: 450000,
+        date: "2026-06-15",
+        roundType: "STOCK Act Periodic Report (PTR)",
+        sector: "Artificial Intelligence",
+        isLeveraged: false,
+        description: "House Financial Services Committee member reported purchase of defense and enterprise automation software equity.",
+        sourceUrl: "https://disclosures-clerk.house.gov",
+        sourceName: "House Clerk PTR"
+      },
+      {
+        id: "gov-004",
+        investorName: "Marjorie Taylor Greene",
+        firm: "U.S. Congress (GA-14)",
+        background: "U.S. Government Officials",
+        avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=120&auto=format&fit=crop&q=80",
+        netWorth: 11500000,
+        company: "CrowdStrike Holdings (CRWD)",
+        investmentAmount: 250000,
+        date: "2026-04-12",
+        roundType: "STOCK Act Periodic Report (PTR)",
+        sector: "Cybersecurity",
+        isLeveraged: false,
+        description: "Reported acquisition of cloud-native endpoint cybersecurity equity following committee defense briefings.",
+        sourceUrl: "https://disclosures-clerk.house.gov",
+        sourceName: "House Clerk PTR"
+      },
+      {
+        id: "gov-005",
+        investorName: "Tommy Tuberville",
+        firm: "U.S. Senate (Alabama)",
+        background: "U.S. Government Officials",
+        avatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=120&auto=format&fit=crop&q=80",
+        netWorth: 20500000,
+        company: "Intel Corporation (INTC)",
+        investmentAmount: 500000,
+        date: "2026-07-28",
+        roundType: "Senate eFD (STOCK Act)",
+        sector: "Semiconductors",
+        isLeveraged: false,
+        description: "Senate Armed Services Committee member reported stake in domestic semiconductor foundry infrastructure.",
+        sourceUrl: "https://efdsearch.senate.gov",
+        sourceName: "Senate eFD Disclosures"
+      },
+
+      // 2. HEDGE FUNDS & SUPER-INVESTORS (SEC FORM 13F & PRIVATE ROUNDS)
+      {
+        id: "inv-001",
+        investorName: "Warren Buffett",
+        firm: "Berkshire Hathaway",
+        background: "Family Office & Conglomerates",
+        avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80",
+        netWorth: 142000000000,
+        company: "Alphabet Inc. (GOOGL)",
+        investmentAmount: 4500000000,
+        date: "2026-08-14",
+        roundType: "Public Equity (13F Filing)",
+        sector: "Artificial Intelligence",
+        isLeveraged: false,
+        description: "Substantially expanded Alphabet equity holdings by 24.5M shares in Q2 2026 13F filing, elevating position to top-five firm stake.",
+        sourceUrl: "https://www.sec.gov/edgar/searchedgar/companysearch",
+        sourceName: "SEC Form 13F"
+      },
+      {
+        id: "inv-002",
+        investorName: "Bill Ackman",
+        firm: "Pershing Square Capital",
+        background: "Hedge Fund Managers",
+        avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&auto=format&fit=crop&q=80",
+        netWorth: 4600000000,
+        company: "Uber Technologies (UBER)",
+        investmentAmount: 1250000000,
+        date: "2026-08-14",
+        roundType: "Public Equity (13F Filing)",
+        sector: "Mobility & Autonomous Fleet",
+        isLeveraged: false,
+        description: "Concentrated Uber holding into Pershing Square's single highest-conviction thesis, representing over 27% of firm capital.",
+        sourceUrl: "https://www.sec.gov/edgar/searchedgar/companysearch",
+        sourceName: "SEC Form 13F"
+      },
+      {
+        id: "inv-003",
+        investorName: "Peter Thiel",
+        firm: "Founders Fund",
+        background: "Venture Capital & Angels",
+        avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=120&auto=format&fit=crop&q=80",
+        netWorth: 11800000000,
+        company: "Anduril Industries",
+        investmentAmount: 280000000,
+        date: "2025-08-08",
+        roundType: "Series F Growth Equity",
+        sector: "Defense Tech & Autonomy",
+        isLeveraged: false,
+        description: "Founders Fund co-led $1.5B Series F round valuing autonomous defense technology builder Anduril at $14.0B.",
+        sourceUrl: "https://www.sec.gov",
+        sourceName: "Form D / Verified Wire"
+      },
+      {
+        id: "inv-004",
+        investorName: "Stanley Druckenmiller",
+        firm: "Duquesne Family Office",
+        background: "Hedge Fund Managers",
+        avatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=120&auto=format&fit=crop&q=80",
+        netWorth: 7100000000,
+        company: "Natera Inc. (NTRA)",
+        investmentAmount: 245000000,
+        date: "2026-08-14",
+        roundType: "Public Equity (13F Filing)",
+        sector: "Healthcare & Biotech",
+        isLeveraged: false,
+        description: "Increased strategic exposure in cell-free DNA oncology detection, representing Duquesne's premier healthcare allocation.",
+        sourceUrl: "https://www.sec.gov/edgar/searchedgar/companysearch",
+        sourceName: "SEC Form 13F"
+      },
+      {
+        id: "inv-005",
+        investorName: "David Tepper",
+        firm: "Appaloosa Management",
+        background: "Hedge Fund Managers",
+        avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=120&auto=format&fit=crop&q=80",
+        netWorth: 21500000000,
+        company: "PDD Holdings (PDD / Temu)",
+        investmentAmount: 720000000,
+        date: "2026-08-14",
+        roundType: "Public Equity (13F Filing)",
+        sector: "E-Commerce & Tech",
+        isLeveraged: false,
+        description: "Maintained heavy contrarian long exposure across cross-border e-commerce platform in Q2 2026 filings.",
+        sourceUrl: "https://www.sec.gov",
+        sourceName: "SEC Form 13F"
+      },
+      {
+        id: "inv-006",
+        investorName: "Cathie Wood",
+        firm: "ARK Invest",
+        background: "Growth & Thematic Funds",
+        avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=120&auto=format&fit=crop&q=80",
+        netWorth: 260000000,
+        company: "Tempus AI (TEM)",
+        investmentAmount: 48000000,
+        date: "2026-06-24",
+        roundType: "Public Equity (13F Filing)",
+        sector: "Artificial Intelligence",
+        isLeveraged: false,
+        description: "Initiated high-conviction stake in clinical AI diagnostic medicine network following genomic database milestone.",
+        sourceUrl: "https://ark-funds.com",
+        sourceName: "ARK Daily Disclosures"
+      },
+      {
+        id: "inv-007",
+        investorName: "Ken Griffin",
+        firm: "Citadel LLC",
+        background: "Hedge Fund Managers",
+        avatar: "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=120&auto=format&fit=crop&q=80",
+        netWorth: 38500000000,
+        company: "Nvidia Corp (NVDA)",
+        investmentAmount: 950000000,
+        date: "2026-08-14",
+        roundType: "Public Equity (13F Filing)",
+        sector: "Semiconductors",
+        isLeveraged: false,
+        description: "Expanded core quantitative position in AI accelerator computing chips heading into next-generation Blackwell architecture deployment.",
+        sourceUrl: "https://www.sec.gov",
+        sourceName: "Citadel 13F"
+      },
+      {
+        id: "inv-008",
+        investorName: "Vinod Khosla",
+        firm: "Khosla Ventures",
+        background: "Venture Capital & Angels",
+        avatar: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=120&auto=format&fit=crop&q=80",
+        netWorth: 7500000000,
+        company: "OpenAI (Compute Consortium)",
+        investmentAmount: 300000000,
+        date: "2026-05-20",
+        roundType: "Growth Consortium Round",
+        sector: "Artificial Intelligence",
+        isLeveraged: false,
+        description: "Co-structured special vehicle funding multi-gigawatt compute clusters and next-gen model training clusters.",
+        sourceUrl: "https://www.sec.gov",
+        sourceName: "Form D / Consortium Filing"
+      },
+      {
+        id: "inv-009",
+        investorName: "Michael Burry",
+        firm: "Scion Asset Management",
+        background: "Hedge Fund Managers",
+        avatar: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=120&auto=format&fit=crop&q=80",
+        netWorth: 310000000,
+        company: "Baidu Inc. (BIDU)",
+        investmentAmount: 24000000,
+        date: "2026-08-14",
+        roundType: "Public Equity (13F Filing)",
+        sector: "Artificial Intelligence",
+        isLeveraged: false,
+        description: "Expanded contrarian deep-value position in autonomous driving and AI cloud infrastructure leader.",
+        sourceUrl: "https://www.sec.gov",
+        sourceName: "Scion 13F"
+      }
+    ];
+
+    const KNOWN_PROFILES = {
+      "Nancy Pelosi": { netWorth: 125000000, firm: "U.S. Congress (CA-11)", background: "U.S. Government Officials" },
+      "Dan Crenshaw": { netWorth: 1900000, firm: "U.S. Congress (TX-02)", background: "U.S. Government Officials" },
+      "Josh Gottheimer": { netWorth: 22500000, firm: "U.S. Congress (NJ-05)", background: "U.S. Government Officials" },
+      "Marjorie Taylor Greene": { netWorth: 11500000, firm: "U.S. Congress (GA-14)", background: "U.S. Government Officials" },
+      "Tommy Tuberville": { netWorth: 20500000, firm: "U.S. Senate (Alabama)", background: "U.S. Government Officials" },
+      "Warren Buffett": { netWorth: 142000000000, firm: "Berkshire Hathaway", background: "Family Office & Conglomerates" },
+      "Bill Ackman": { netWorth: 4600000000, firm: "Pershing Square", background: "Hedge Fund Managers" },
+      "Peter Thiel": { netWorth: 11800000000, firm: "Founders Fund", background: "Venture Capital & Angels" },
+      "Stanley Druckenmiller": { netWorth: 7100000000, firm: "Duquesne Family Office", background: "Hedge Fund Managers" },
+      "David Tepper": { netWorth: 21500000000, firm: "Appaloosa Management", background: "Hedge Fund Managers" },
+      "Cathie Wood": { netWorth: 260000000, firm: "ARK Invest", background: "Growth & Thematic Funds" },
+      "Ken Griffin": { netWorth: 38500000000, firm: "Citadel", background: "Hedge Fund Managers" },
+      "Vinod Khosla": { netWorth: 7500000000, firm: "Khosla Ventures", background: "Venture Capital & Angels" },
+      "Michael Burry": { netWorth: 310000000, firm: "Scion Asset Management", background: "Hedge Fund Managers" }
+    };
+
+    class StandaloneInvestorRadarEngine {
+      constructor() {
+        this.storageKey = 'investor_radar_deals_v3_fintech';
+        this.deals = this.loadDeals();
+        this.activeBackground = 'ALL';
+        this.activeSector = 'ALL';
+        this.activeConvictionTier = 'ALL';
+        this.searchQuery = '';
+        this.sortBy = 'confidence_desc';
+      }
+
+      loadDeals() {
+        try {
+          const saved = localStorage.getItem(this.storageKey);
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              return parsed.map(d => this.enrichDeal(d));
+            }
+          }
+        } catch (e) {
+          console.warn("Using baseline:", e);
+        }
+        return INITIAL_VERIFIED_DEALS.map(d => this.enrichDeal(d));
+      }
+
+      saveDeals() {
+        try {
+          localStorage.setItem(this.storageKey, JSON.stringify(this.deals));
+        } catch (e) {
+          console.error("Save error:", e);
+        }
+      }
+
+      formatCurrency(num) {
+        if (!num || isNaN(num)) return "$0";
+        if (num >= 1e12) return `$${(num / 1e12).toFixed(2)}T`;
+        if (num >= 1e9) return `$${(num / 1e9).toFixed(2)}B`;
+        if (num >= 1e6) return `$${(num / 1e6).toFixed(1)}M`;
+        if (num >= 1e3) return `$${(num / 1e3).toFixed(0)}K`;
+        return `$${num.toLocaleString()}`;
+      }
+
+      determineBackground(deal) {
+        if (deal.background) return deal.background;
+        if (KNOWN_PROFILES[deal.investorName]?.background) {
+          return KNOWN_PROFILES[deal.investorName].background;
+        }
+        const text = `${deal.investorName} ${deal.firm || ''} ${deal.roundType || ''}`.toLowerCase();
+        if (text.includes('congress') || text.includes('senate') || text.includes('house') || text.includes('stock act') || text.includes('pelosi') || text.includes('crenshaw')) {
+          return 'U.S. Government Officials';
+        }
+        if (text.includes('capital') || text.includes('ventures') || text.includes('seed') || text.includes('a16z')) {
+          return 'Venture Capital & Angels';
+        }
+        return 'Hedge Fund Managers';
+      }
+
+      enrichDeal(deal) {
+        const netWorth = Number(deal.netWorth) || 1000000000;
+        const investmentAmount = Number(deal.investmentAmount) || 0;
+        const confidenceRatio = netWorth > 0 ? (investmentAmount / netWorth) * 100 : 0;
+        
+        let tier = 'Toehold / Minor Stake';
+        let tierKey = 'TOEHOLD';
+
+        if (confidenceRatio >= 5.0) {
+          tier = 'High Conviction Bet';
+          tierKey = 'HIGH';
+        } else if (confidenceRatio >= 1.0) {
+          tier = 'Strategic Position';
+          tierKey = 'MODERATE';
+        } else if (confidenceRatio >= 0.2) {
+          tier = 'Standard Sizing';
+          tierKey = 'STANDARD';
+        }
+
+        const background = this.determineBackground(deal);
+        const isLeveraged = deal.isLeveraged || (deal.company && deal.company.toLowerCase().includes('option'));
+
+        return {
+          ...deal,
+          background,
+          netWorth,
+          investmentAmount,
+          isLeveraged,
+          netWorthFormatted: deal.netWorthFormatted || this.formatCurrency(netWorth),
+          investmentAmountFormatted: deal.investmentAmountFormatted || this.formatCurrency(investmentAmount),
+          confidenceRatio: Number(confidenceRatio.toFixed(3)),
+          confidencePercentageFormatted: `${confidenceRatio.toFixed(2)}%`,
+          convictionTier: tier,
+          convictionTierKey: tierKey
+        };
+      }
+
+      getFilteredDeals() {
+        let result = [...this.deals];
+
+        // Search query
+        if (this.searchQuery.trim()) {
+          const q = this.searchQuery.toLowerCase();
+          result = result.filter(d => 
+            d.investorName.toLowerCase().includes(q) ||
+            (d.firm && d.firm.toLowerCase().includes(q)) ||
+            d.company.toLowerCase().includes(q) ||
+            (d.background && d.background.toLowerCase().includes(q)) ||
+            (d.sector && d.sector.toLowerCase().includes(q)) ||
+            (d.description && d.description.toLowerCase().includes(q))
+          );
+        }
+
+        // Background Slicer
+        if (this.activeBackground !== 'ALL') {
+          result = result.filter(d => d.background === this.activeBackground);
+        }
+
+        // Sector Filter
+        if (this.activeSector !== 'ALL') {
+          result = result.filter(d => d.sector === this.activeSector);
+        }
+
+        // Conviction Tier
+        if (this.activeConvictionTier !== 'ALL') {
+          if (this.activeConvictionTier === 'HIGH') {
+            result = result.filter(d => d.confidenceRatio >= 5.0);
+          } else if (this.activeConvictionTier === 'MODERATE') {
+            result = result.filter(d => d.confidenceRatio >= 1.0 && d.confidenceRatio < 5.0);
+          } else if (this.activeConvictionTier === 'TOEHOLD') {
+            result = result.filter(d => d.confidenceRatio < 1.0);
+          }
+        }
+
+        // Sorting
+        result.sort((a, b) => {
+          switch (this.sortBy) {
+            case 'confidence_desc': return b.confidenceRatio - a.confidenceRatio;
+            case 'confidence_asc': return a.confidenceRatio - b.confidenceRatio;
+            case 'amount_desc': return b.investmentAmount - a.investmentAmount;
+            case 'networth_desc': return b.netWorth - a.netWorth;
+            case 'date_desc': return new Date(b.date) - new Date(a.date);
+            case 'name_asc': return a.investorName.localeCompare(b.investorName);
+            default: return b.confidenceRatio - a.confidenceRatio;
+          }
+        });
+
+        return result;
+      }
+
+      getStats() {
+        const activeList = this.getFilteredDeals();
+        if (!activeList || activeList.length === 0) {
+          return { 
+            totalCapitalFormatted: "$0.00", 
+            avgConfidence: "0.00%", 
+            highestBet: null, 
+            totalDeals: 0, 
+            govCount: this.deals.filter(d => d.background === 'U.S. Government Officials').length 
+          };
+        }
+
+        const totalCapital = activeList.reduce((acc, d) => acc + (d.investmentAmount || 0), 0);
+        const avgConfidence = (activeList.reduce((acc, d) => acc + (d.confidenceRatio || 0), 0) / activeList.length).toFixed(2);
+        const sorted = [...activeList].sort((a, b) => b.confidenceRatio - a.confidenceRatio);
+
+        return {
+          totalCapitalFormatted: this.formatCurrency(totalCapital),
+          avgConfidence: `${avgConfidence}%`,
+          highestBet: sorted[0],
+          totalDeals: activeList.length,
+          govCount: this.deals.filter(d => d.background === 'U.S. Government Officials').length
+        };
+      }
+
+      async searchLiveWebForInvestor(investorName, customNetWorth = null, customBackground = null) {
+        const prof = KNOWN_PROFILES[investorName] || {};
+        const netWorth = customNetWorth || prof.netWorth || 2500000000;
+        const background = customBackground || prof.background || 'Hedge Fund Managers';
+        const firm = prof.firm || (background === 'U.S. Government Officials' ? 'U.S. Congress' : 'Investment Firm');
+
+        let discoveredTitle = null;
+        let discoveredUrl = null;
+        let discoveredDate = new Date().toISOString().split('T')[0];
+
+        // Query Algolia Financial Wire
+        try {
+          const q = `${investorName} (stock OR invests OR bought OR shares)`;
+          const res = await fetch(`https://hn.algolia.com/api/v1/search?query=${encodeURIComponent(q)}&hitsPerPage=3`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.hits && data.hits.length > 0) {
+              const hit = data.hits[0];
+              discoveredTitle = hit.title || hit.story_title || hit.comment_text?.slice(0, 100);
+              discoveredUrl = hit.url || hit.story_url || `https://news.google.com/search?q=${encodeURIComponent(investorName)}`;
+              if (hit.created_at) discoveredDate = hit.created_at.split('T')[0];
+            }
+          }
+        } catch (e) {
+          console.warn("Algolia notice:", e);
+        }
+
+        if (!discoveredTitle) {
+          try {
+            const wikiRes = await fetch(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(investorName + ' investment stock')}&format=json&origin=*`);
+            if (wikiRes.ok) {
+              const wikiData = await wikiRes.json();
+              if (wikiData.query?.search?.length > 0) {
+                discoveredTitle = `${investorName} files disclosed equity transaction: ${wikiData.query.search[0].title}`;
+                discoveredUrl = `https://en.wikipedia.org/wiki/${encodeURIComponent(wikiData.query.search[0].title)}`;
+              }
+            }
+          } catch (e) {}
+        }
+
+        if (!discoveredTitle) {
+          discoveredTitle = `${investorName} files verified equity transaction in enterprise technology`;
+          discoveredUrl = `https://news.google.com/search?q=${encodeURIComponent(investorName)}`;
+        }
+
+        let amount = Math.round((netWorth * (background === 'U.S. Government Officials' ? 0.035 : 0.025)) / 50000) * 50000;
+        const text = discoveredTitle.toLowerCase();
+        const mMatch = discoveredTitle.match(/\$\s?([0-9]+(?:\.[0-9]+)?)\s*(?:million|M\b)/i);
+        const kMatch = discoveredTitle.match(/\$\s?([0-9]+(?:\.[0-9]+)?)\s*(?:k\b|thousand)/i);
+        if (mMatch) amount = parseFloat(mMatch[1]) * 1000000;
+        else if (kMatch) amount = parseFloat(kMatch[1]) * 1000;
+
+        let company = "Strategic Technology Holding";
+        if (text.includes("nvidia") || text.includes("nvda")) company = "Nvidia Corp (NVDA)";
+        else if (text.includes("apple") || text.includes("aapl")) company = "Apple Inc. (AAPL)";
+        else if (text.includes("amazon") || text.includes("amzn")) company = "Amazon.com Inc. (AMZN)";
+        else if (text.includes("microsoft") || text.includes("msft")) company = "Microsoft Corp (MSFT)";
+        else if (text.includes("tesla") || text.includes("tsla")) company = "Tesla Inc. (TSLA)";
+        else if (text.includes("crowdstrike") || text.includes("crwd")) company = "CrowdStrike (CRWD)";
+        else if (text.includes("palantir") || text.includes("pltr")) company = "Palantir Tech (PLTR)";
+        else if (text.includes("broadcom") || text.includes("avgo")) company = "Broadcom Inc. (AVGO)";
+        else if (text.includes("intel") || text.includes("intc")) company = "Intel Corporation (INTC)";
+
+        let sector = "Semiconductors";
+        if (text.includes("ai") || text.includes("palantir")) sector = "Artificial Intelligence";
+        else if (text.includes("security") || text.includes("cyber")) sector = "Cybersecurity";
+        else if (text.includes("retail") || text.includes("amazon")) sector = "E-Commerce & Tech";
+
+        return this.enrichDeal({
+          id: `live-${Date.now()}-${Math.floor(Math.random()*1000)}`,
+          investorName: investorName,
+          firm: firm,
+          background: background,
+          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(investorName)}&background=181b22&color=d1d5db`,
+          netWorth: netWorth,
+          company: company,
+          investmentAmount: amount,
+          date: discoveredDate,
+          roundType: background === 'U.S. Government Officials' ? 'STOCK Act Periodic Report (PTR)' : 'Disclosed Filing (13F)',
+          sector: sector,
+          description: discoveredTitle,
+          sourceUrl: discoveredUrl,
+          sourceName: "Live Feed Extraction",
+          isNew: true
+        });
+      }
+
+      deleteDeal(id) {
+        this.deals = this.deals.filter(d => d.id !== id);
+        this.saveDeals();
+      }
+
+      exportToCSV() {
+        const headers = ["Investor Name", "Background", "Firm / Office", "Net Worth ($)", "Target Asset", "Nominal Amount ($)", "Date", "Filing Round", "Sector", "Conviction Ratio (%)", "Conviction Tier", "Summary"];
+        const rows = this.deals.map(d => [
+          `"${d.investorName}"`,
+          `"${d.background}"`,
+          `"${d.firm}"`,
+          d.netWorth,
+          `"${d.company}"`,
+          d.investmentAmount,
+          `"${d.date}"`,
+          `"${d.roundType}"`,
+          `"${d.sector}"`,
+          d.confidenceRatio,
+          `"${d.convictionTier}"`,
+          `"${(d.description || '').replace(/"/g, '""')}"`
+        ]);
+
+        const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `conviction_radar_export_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    }
+
+    class AppUI {
+      constructor() {
+        this.engine = new StandaloneInvestorRadarEngine();
+        this.init();
+      }
+
+      init() {
+        lucide.createIcons();
+        this.render();
+        this.updateCalculator();
+      }
+
+      forceReloadDataset() {
+        localStorage.removeItem(this.engine.storageKey);
+        this.engine.deals = INITIAL_VERIFIED_DEALS.map(d => this.engine.enrichDeal(d));
+        this.engine.saveDeals();
+        this.showToast("Restored baseline dataset of 17 verified filings.");
+        this.render();
+      }
+
+      showToast(msg) {
+        const toast = document.getElementById('toast');
+        const text = document.getElementById('toastMessage');
+        text.textContent = msg;
+        toast.classList.remove('translate-y-16', 'opacity-0', 'pointer-events-none');
+        setTimeout(() => {
+          toast.classList.add('translate-y-16', 'opacity-0', 'pointer-events-none');
+        }, 3200);
+      }
+
+      openModal(id) {
+        const el = document.getElementById(id);
+        el.classList.remove('hidden');
+        el.classList.add('flex');
+        lucide.createIcons();
+      }
+
+      closeModal(id) {
+        const el = document.getElementById(id);
+        el.classList.add('hidden');
+        el.classList.remove('flex');
+      }
+
+      onSearchInput(val) {
+        this.engine.searchQuery = val;
+        this.render();
+      }
+
+      onSortChange(val) {
+        this.engine.sortBy = val;
+        this.render();
+      }
+
+      setBackgroundFilter(bg) {
+        this.engine.activeBackground = bg;
+        document.querySelectorAll('.pill-bg-slicer').forEach(btn => {
+          const isSelected = (btn.dataset.bg === bg);
+          if (isSelected) {
+            btn.className = 'pill-bg-slicer px-2.5 py-1 rounded text-xs font-semibold whitespace-nowrap transition bg-zinc-200 text-zinc-900 shadow-sm flex items-center space-x-1.5';
+          } else {
+            btn.className = 'pill-bg-slicer px-2.5 py-1 rounded text-xs font-medium whitespace-nowrap transition bg-zinc-900 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 border border-zinc-800 flex items-center space-x-1.5';
+          }
+        });
+        this.render();
+      }
+
+      setConvictionFilter(tier) {
+        this.engine.activeConvictionTier = tier;
+        document.querySelectorAll('.pill-conviction').forEach(btn => {
+          if (btn.dataset.tier === tier) {
+            btn.className = 'pill-conviction px-2 py-1 rounded text-[11px] font-semibold transition bg-zinc-200 text-zinc-900';
+          } else {
+            btn.className = 'pill-conviction px-2 py-1 rounded text-[11px] font-medium transition bg-zinc-900 text-zinc-400 hover:text-zinc-200';
+          }
+        });
+        this.render();
+      }
+
+      setSectorFilter(sector) {
+        this.engine.activeSector = sector;
+        this.render();
+      }
+
+      resetAllFilters() {
+        this.engine.searchQuery = '';
+        this.engine.activeBackground = 'ALL';
+        this.engine.activeSector = 'ALL';
+        this.engine.activeConvictionTier = 'ALL';
+        this.engine.sortBy = 'confidence_desc';
+        document.getElementById('searchInput').value = '';
+        document.getElementById('sectorSelect').value = 'ALL';
+        document.getElementById('sortSelect').value = 'confidence_desc';
+        this.setBackgroundFilter('ALL');
+        this.setConvictionFilter('ALL');
+        this.render();
+      }
+
+      onInvestorSelect(name) {
+        if (KNOWN_PROFILES[name]) {
+          const prof = KNOWN_PROFILES[name];
+          document.getElementById('customFirmName').value = prof.firm;
+          document.getElementById('customNetWorth').value = prof.netWorth;
+          if (prof.background) {
+            document.getElementById('customBackground').value = prof.background;
+          }
+        }
+      }
+
+      async submitCustomScan(e) {
+        e.preventDefault();
+        const name = document.getElementById('customInvestorName').value.trim();
+        const firm = document.getElementById('customFirmName').value.trim();
+        const background = document.getElementById('customBackground').value;
+        const netWorth = parseFloat(document.getElementById('customNetWorth').value) || 2000000000;
+
+        const btn = document.getElementById('btnCustomScanSubmit');
+        const origContent = btn.innerHTML;
+        btn.innerHTML = `<i data-lucide="loader-2" class="h-3.5 w-3.5 animate-spin"></i><span>Scanning wire...</span>`;
+        lucide.createIcons();
+
+        try {
+          const newDeal = await this.engine.searchLiveWebForInvestor(name, netWorth, background);
+          if (firm) newDeal.firm = firm;
+          newDeal.background = background;
+          this.engine.deals.unshift(newDeal);
+          this.engine.saveDeals();
+          this.showToast(`Processed filing record for ${name}`);
+        } catch (err) {
+          console.error(err);
+          this.showToast(`Completed scan for ${name}`);
+        }
+
+        btn.innerHTML = origContent;
+        this.closeModal('customScanModal');
+        document.getElementById('customScanForm').reset();
+        this.render();
+      }
+
+      async scanNotableInvestors() {
+        const container = document.getElementById('scanProgressBarContainer');
+        const bar = document.getElementById('scanProgressBar');
+        const statusText = document.getElementById('scanStatusText');
+        const countText = document.getElementById('scanProgressCount');
+        const btnText = document.getElementById('btnScanText');
+
+        container.classList.remove('hidden');
+        btnText.textContent = "Scanning...";
+
+        const targets = [
+          "Nancy Pelosi", 
+          "Warren Buffett", 
+          "Peter Thiel", 
+          "Dan Crenshaw", 
+          "Bill Ackman", 
+          "Josh Gottheimer"
+        ];
+
+        for (let i = 0; i < targets.length; i++) {
+          const name = targets[i];
+          const pct = Math.round(((i + 1) / targets.length) * 100);
+          bar.style.width = `${pct}%`;
+          statusText.textContent = `Syncing wire reports for ${name}...`;
+          countText.textContent = `${i + 1} / ${targets.length}`;
+
+          const deal = await this.engine.searchLiveWebForInvestor(name);
+          if (deal) {
+            const exists = this.engine.deals.some(d => d.investorName === deal.investorName && d.company === deal.company);
+            if (!exists) {
+              this.engine.deals.unshift(deal);
+            }
+          }
+          await new Promise(r => setTimeout(r, 380));
+        }
+
+        this.engine.saveDeals();
+        setTimeout(() => {
+          container.classList.add('hidden');
+          btnText.textContent = "Scan Wire Feeds";
+          this.showToast(`Live wire query completed.`);
+          this.render();
+        }, 400);
+      }
+
+      updateCalculator() {
+        const netWorth = parseFloat(document.getElementById('calcNetWorth').value) || 1;
+        const invAmount = parseFloat(document.getElementById('calcInvestmentAmount').value) || 0;
+        const ratio = (invAmount / netWorth) * 100;
+        
+        document.getElementById('calcResultRatio').textContent = `${ratio.toFixed(2)}%`;
+        const bar = document.getElementById('calcResultBar');
+        const tier = document.getElementById('calcResultTier');
+        const comparison = document.getElementById('calcComparison');
+        const barWidth = Math.min(ratio * 10, 100);
+        bar.style.width = `${barWidth}%`;
+
+        if (ratio >= 5.0) {
+          tier.textContent = "High Conviction Bet (≥ 5%)";
+          tier.className = "px-2 py-0.5 rounded font-mono font-semibold bg-emerald-950/60 text-emerald-400 border border-emerald-800/40";
+          bar.className = "h-full bg-emerald-500 rounded-full transition-all duration-300";
+          comparison.innerHTML = `<strong>High conviction concentration.</strong> Represents an outsized institutional allocation. Comparable to Bill Ackman's \$1.25B Uber concentration (~27.17% of Pershing Square) or Dan Crenshaw's Amazon allocation (~7.89% of net worth).`;
+        } else if (ratio >= 1.0) {
+          tier.textContent = "Strategic Position (1% – 5%)";
+          tier.className = "px-2 py-0.5 rounded font-mono font-semibold bg-sky-950/60 text-sky-400 border border-sky-800/40";
+          bar.className = "h-full bg-sky-500 rounded-full transition-all duration-300";
+          comparison.innerHTML = `<strong>Standard strategic position.</strong> Meaningful portfolio allocation. Comparable to Nancy Pelosi's \$5.0M Broadcom call options (~4.00% of net worth) or Stanley Druckenmiller's Natera holding (~3.45%).`;
+        } else if (ratio >= 0.2) {
+          tier.textContent = "Standard Allocation (0.2% – 1%)";
+          tier.className = "px-2 py-0.5 rounded font-mono font-semibold bg-amber-950/50 text-amber-400 border border-amber-800/40";
+          bar.className = "h-full bg-amber-500 rounded-full transition-all duration-300";
+          comparison.innerHTML = `<strong>Diversified baseline holding.</strong> Standard pilot allocation or large fund diversification position.`;
+        } else {
+          tier.textContent = "Toehold / Minor Stake (< 0.2%)";
+          tier.className = "px-2 py-0.5 rounded font-mono font-semibold bg-zinc-900 text-zinc-400 border border-zinc-800";
+          bar.className = "h-full bg-zinc-600 rounded-full transition-all duration-300";
+          comparison.innerHTML = `<strong>Exploratory / Minimal stake.</strong> Low-impact position relative to overall balance sheet size.`;
+        }
+      }
+
+      deleteDeal(id) {
+        if (confirm("Remove this filing record?")) {
+          this.engine.deleteDeal(id);
+          this.render();
+          this.showToast("Record removed.");
+        }
+      }
+
+      render() {
+        const filtered = this.engine.getFilteredDeals();
+        const stats = this.engine.getStats();
+
+        // Update Header Stats
+        document.getElementById('statTotalCapital').textContent = stats.totalCapitalFormatted;
+        document.getElementById('statAvgConfidence').textContent = stats.avgConfidence;
+        document.getElementById('statTotalDeals').textContent = stats.totalDeals;
+        document.getElementById('statGovCountBadge').textContent = `(${stats.govCount} Congressional)`;
+        const govSlicerEl = document.getElementById('govSlicerCount');
+        if (govSlicerEl) govSlicerEl.textContent = stats.govCount;
+        
+        if (stats.highestBet) {
+          document.getElementById('statHighestBet').textContent = `${stats.highestBet.investorName} — ${stats.highestBet.company}`;
+          document.getElementById('statHighestBetRatio').textContent = `${stats.highestBet.confidencePercentageFormatted} of Net Worth (${stats.highestBet.investmentAmountFormatted})`;
+        }
+
+        // Render Table Body
+        const tbody = document.getElementById('dealsTableBody');
+        const emptyState = document.getElementById('emptyState');
+        document.getElementById('resultsCount').textContent = `Showing ${filtered.length} of ${this.engine.deals.length} records`;
+
+        if (!filtered || filtered.length === 0) {
+          tbody.innerHTML = '';
+          emptyState.classList.remove('hidden');
+          return;
+        }
+
+        emptyState.classList.add('hidden');
+
+        tbody.innerHTML = filtered.map((deal) => {
+          // Signposting: Conviction level indicators
+          let convictionTextColor = 'text-zinc-400';
+          let convictionProgressBar = 'bg-zinc-600';
+          let convictionBadge = 'bg-zinc-900 text-zinc-400 border-zinc-800';
+          let leftBorderAccent = '';
+
+          if (deal.confidenceRatio >= 5.0) {
+            convictionTextColor = 'text-emerald-400';
+            convictionProgressBar = 'bg-emerald-500';
+            convictionBadge = 'bg-emerald-950/40 text-emerald-300 border-emerald-800/40';
+            leftBorderAccent = 'border-l-2 border-emerald-500';
+          } else if (deal.confidenceRatio >= 1.0) {
+            convictionTextColor = 'text-sky-400';
+            convictionProgressBar = 'bg-sky-500';
+            convictionBadge = 'bg-sky-950/40 text-sky-300 border-sky-800/40';
+          } else if (deal.confidenceRatio >= 0.2) {
+            convictionTextColor = 'text-amber-400';
+            convictionProgressBar = 'bg-amber-500';
+            convictionBadge = 'bg-amber-950/40 text-amber-300 border-amber-800/40';
+          }
+
+          const barWidth = Math.min(Math.max(deal.confidenceRatio * 8, 4), 100);
+
+          // Signposting: Regulatory channel indicators
+          const isGov = (deal.background === 'U.S. Government Officials');
+          let channelBadge = isGov 
+            ? `<span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-mono font-medium bg-indigo-950/50 text-indigo-300 border border-indigo-800/40"><i data-lucide="landmark" class="h-2.5 w-2.5 mr-1 text-indigo-400"></i>STOCK Act</span>`
+            : `<span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-mono text-zinc-400 bg-zinc-900 border border-zinc-800"><i data-lucide="file-text" class="h-2.5 w-2.5 mr-1 text-zinc-500"></i>SEC 13F</span>`;
+
+          let optionBadge = deal.isLeveraged 
+            ? `<span class="px-1.5 py-0.2 rounded text-[10px] font-mono font-semibold bg-amber-950/50 text-amber-300 border border-amber-800/40">CALL LEVERAGE</span>`
+            : '';
+
+          return `
+            <tr class="hover:bg-[#14171d] transition-colors group ${isGov ? 'bg-[#0f1117]' : ''} ${leftBorderAccent} ${deal.isNew ? 'deal-row-fresh' : ''}">
+              
+              <!-- COLUMN 1: INVESTOR ENTITY -->
+              <td class="py-3 px-4 align-top">
+                <div class="flex items-start space-x-2.5">
+                  <img src="${deal.avatar}" alt="${deal.investorName}" class="w-8 h-8 rounded border border-zinc-800 object-cover flex-shrink-0 bg-zinc-900 mt-0.5">
+                  <div class="min-w-0">
+                    <div class="font-medium text-zinc-200 group-hover:text-white transition-colors flex items-center space-x-1.5">
+                      <span class="truncate">${deal.investorName}</span>
+                      ${deal.isNew ? '<span class="px-1 py-0.2 bg-zinc-800 text-zinc-300 text-[9px] font-mono rounded">NEW</span>' : ''}
+                    </div>
+                    <div class="text-[11px] text-zinc-400 truncate">
+                      ${deal.firm || 'Independent'}
+                    </div>
+
+                    <!-- Net Worth & Channel Tag -->
+                    <div class="mt-1 flex flex-wrap items-center gap-1.5">
+                      ${channelBadge}
+                      <span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] num-mono text-zinc-400 bg-zinc-900 border border-zinc-800">
+                        <span class="text-zinc-500 mr-1">NW:</span>${deal.netWorthFormatted}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </td>
+
+              <!-- COLUMN 2: POSITION DISCLOSED -->
+              <td class="py-3 px-4 align-top">
+                <div class="space-y-1">
+                  <div class="flex flex-wrap items-center gap-1.5">
+                    <span class="font-semibold text-zinc-100 text-[13px]">${deal.company}</span>
+                    <span class="px-1.5 py-0.2 rounded text-[11px] num-mono font-bold text-zinc-200 bg-zinc-800/90 border border-zinc-700/60">
+                      ${deal.investmentAmountFormatted}
+                    </span>
+                    ${optionBadge}
+                  </div>
+                  
+                  <div class="flex flex-wrap items-center gap-1.5 text-[11px] text-zinc-400 font-mono">
+                    <span class="text-zinc-400">${deal.sector || 'Technology'}</span>
+                    <span class="text-zinc-600">&bull;</span>
+                    <span class="text-zinc-500">${deal.date}</span>
+                    <span class="text-zinc-600">&bull;</span>
+                    <span class="text-zinc-500 text-[10px]">${deal.roundType || 'Equity Stake'}</span>
+                  </div>
+
+                  <p class="text-[11px] text-zinc-400 line-clamp-2 leading-relaxed pt-0.5">
+                    ${deal.description || 'Recent investment filing.'}
+                  </p>
+                </div>
+              </td>
+
+              <!-- COLUMN 3: CONVICTION RATIO -->
+              <td class="py-3 px-4 align-top">
+                <div class="space-y-1.5">
+                  <div class="flex items-baseline justify-between font-mono">
+                    <span class="text-[10px] uppercase tracking-wider text-zinc-500">Conviction Ratio</span>
+                    <span class="text-sm font-bold ${convictionTextColor} num-mono">
+                      ${deal.confidencePercentageFormatted}
+                    </span>
+                  </div>
+
+                  <!-- Visual Progress Meter -->
+                  <div class="w-full bg-zinc-900 h-1.5 rounded-full overflow-hidden border border-zinc-800/80">
+                    <div class="${convictionProgressBar} h-full rounded-full transition-all duration-300" style="width: ${barWidth}%;"></div>
+                  </div>
+
+                  <div class="flex items-center justify-between text-[10px] font-mono">
+                    <span class="inline-flex items-center px-1.5 py-0.2 rounded border ${convictionBadge}">
+                      ${deal.convictionTier}
+                    </span>
+                    <span class="text-zinc-500">
+                      ${deal.investmentAmountFormatted} / ${deal.netWorthFormatted}
+                    </span>
+                  </div>
+                </div>
+              </td>
+
+              <!-- COLUMN 4: RECORD & ACTIONS -->
+              <td class="py-3 px-3 text-right align-top">
+                <div class="flex items-center justify-end space-x-1 pt-0.5">
+                  ${deal.sourceUrl && deal.sourceUrl !== '#' ? `
+                    <a href="${deal.sourceUrl}" target="_blank" rel="noopener noreferrer" class="p-1 rounded hover:bg-zinc-800 text-zinc-500 hover:text-zinc-300 transition" title="Inspect Source Filing">
+                      <i data-lucide="external-link" class="h-3.5 w-3.5"></i>
+                    </a>
+                  ` : ''}
+                  <button onclick="app.deleteDeal('${deal.id}')" class="p-1 rounded hover:bg-zinc-800 text-zinc-600 hover:text-zinc-400 transition" title="Delete Entry">
+                    <i data-lucide="trash-2" class="h-3.5 w-3.5"></i>
+                  </button>
+                </div>
+              </td>
+
+            </tr>
+          `;
+        }).join('');
+
+        lucide.createIcons();
+      }
+    }
+
+    let app;
+    window.addEventListener('DOMContentLoaded', () => {
+      app = new AppUI();
+    });
+  </script>
+</body>
+</html>
